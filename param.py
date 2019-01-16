@@ -21,33 +21,33 @@ savemodel_period = 40
 #-----------------------------m4_gan_network-----------------------------
 '''
 
-#-----------------------------m4_BE_GAN_network-----------------------------
-dataset_dir = '/media/yang/F/DataSet/Face/LFW_FF-GAN'
-dataset_name = 'LFW_FF-GAN'
+# -----------------------------m4_BE_GAN_network-----------------------------
+save_dir = '/WebFace_generate_lr_0.00008/'
+
+dataset_dir = '/media/yang/F/DataSet/Face'
+dataset_name = 'CASIA-WebFace'
 datalabel_dir = '/media/yang/F/DataSet/Face/Label'
-datalabel_name = 'LFW_FF-GAN.txt'
-log_dir = '/media/yang/F/ubuntu/My_Code/My_GAN/1/logs'
-sampel_save_dir = '/media/yang/F/ubuntu/My_Code/My_GAN/1/samples'
-checkpoint_dir = '/media/yang/F/ubuntu/My_Code/My_GAN/1/checkpoint'
-num_gpus = 1
-epoch = 100
-batch_size = 64
+datalabel_name = 'CASIA-WebFace.txt'
+log_dir = '/media/yang/F/ubuntu/My_Code/My_GAN' + save_dir+'logs'  # need to change
+sampel_save_dir = '/media/yang/F/ubuntu/My_Code/My_GAN' + save_dir+'samples'  # need to change
+checkpoint_dir = '/media/yang/F/ubuntu/My_Code/My_GAN' + save_dir+'checkpoint'  # need to change
+num_gpus = 2
+epoch = 200
+batch_size = 16  # need to change
 z_dim = 64
 
 conv_hidden_num = 128
 
 data_format = 'NHWC'
 
-g_lr = 0.00008
-d_lr = 0.00008
+g_lr = 0.00008  # need to change
+d_lr = 0.00008  # need to change
 
 lr_lower_boundary = 0.00002
 
 gamma = 0.5
 lambda_k = 0.5
 
-saveimage_period = 50
-savemodel_period = 200
-#-----------------------------m4_BE_GAN_network-----------------------------
-
-
+saveimage_period = 120
+savemodel_period = 480
+# -----------------------------m4_BE_GAN_network-----------------------------

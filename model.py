@@ -82,7 +82,6 @@ class my_gan:
         dataset_size = names.shape[0]
         names, labels = m4_get_file_label_name(os.path.join(self.cfg.datalabel_dir, self.cfg.datalabel_name),
                                                os.path.join(self.cfg.dataset_dir, self.cfg.dataset_name))
-
         filenames = tf.constant(names)
         filelabels = tf.constant(labels)
         try:
@@ -91,11 +90,17 @@ class my_gan:
             dataset = tf.contrib.data.Dataset.from_tensor_slices((filenames, filelabels))
 
         dataset = dataset.map(m4_parse_function)
-        dataset = dataset.shuffle(buffer_size=1000).batch(self.cfg.batch_size * self.cfg.num_gpus).repeat(
+        dataset = dataset.shuffle(buffer_size=10000).batch(self.cfg.batch_size * self.cfg.num_gpus).repeat(
             self.cfg.epoch)
         iterator = dataset.make_one_shot_iterator()
         one_element = iterator.get_next()
         batch_idxs = dataset_size // (self.cfg.batch_size * self.cfg.num_gpus)
+        batch_images_G, batch_labels_G = self.sess.run(one_element)
+        batch_z_G = np.random.uniform(-1, 1, [self.cfg.batch_size * self.cfg.num_gpus, self.cfg.z_dim]).astype(
+            np.float32)
+        m4_image_save_cv(batch_images_G,
+                         '{}/x_fixed.jpg'.format(self.cfg.sampel_save_dir))
+        print('save one image.')
         try:
             for epoch in range(1,self.cfg.epoch+1):
                 for idx in range(batch_idxs):
@@ -122,7 +127,7 @@ class my_gan:
                         [self.d_loss, self.g_loss, self.global_step,merged],
                         feed_dict={self.images: batch_images,
                                    self.z: batch_z})
-                    if epoch % 150 == 0 and idx == 1:
+                    if epoch % 1000 == 0 and idx == 1:
                         _, _, self.g_lr_, self.d_lr_, = self.sess.run(
                             [self.g_lr_update, self.d_lr_update, self.g_lr, self.d_lr],
                             feed_dict={self.images: batch_images,
@@ -136,7 +141,7 @@ class my_gan:
                         % (epoch, self.cfg.epoch, idx, batch_idxs, timediff, d_loss, g_loss, k_t, Mglobal, self.g_lr_, self.d_lr_))
                     try:
                         if counter % self.cfg.saveimage_period == 0:
-                            samples = self.sess.run([self.sampler], feed_dict={self.z: batch_z})
+                            samples = self.sess.run([self.sampler], feed_dict={self.z: batch_z_G})
                             m4_image_save_cv(samples[0],
                                              '{}/train_{}_{}.jpg'.format(self.cfg.sampel_save_dir, epoch, counter))
                             print('save one image.')
