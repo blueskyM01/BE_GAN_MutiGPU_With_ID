@@ -22,7 +22,7 @@ savemodel_period = 40
 '''
 
 # -----------------------------m4_BE_GAN_network-----------------------------
-is_train = False
+is_train = True
 save_dir = '/WebFace_generate_lr_0.00008/'
 dataset_dir = '/media/yang/F/DataSet/Face'
 dataset_name = 'CASIA-WebFace'
@@ -33,7 +33,7 @@ sampel_save_dir = '/media/yang/F/ubuntu/My_Code/My_GAN' + save_dir+'samples'  # 
 checkpoint_dir = '/media/yang/F/ubuntu/My_Code/My_GAN' + save_dir+'checkpoint'  # need to change
 num_gpus = 2
 epoch = 200
-batch_size = 1  # need to change
+batch_size = 8  # need to change
 z_dim = 64
 conv_hidden_num = 128
 data_format = 'NHWC'

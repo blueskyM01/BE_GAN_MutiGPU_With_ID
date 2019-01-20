@@ -15,6 +15,7 @@ class my_gan:
     def __init__(self, sess, cfg):
         self.sess = sess
         self.cfg = cfg
+
         self.images = tf.placeholder(dtype=tf.float32, shape=[self.cfg.batch_size * self.cfg.num_gpus, 256, 256, 3],
                                      name='real_image')
         self.labels = tf.placeholder(dtype=tf.float32, shape=[self.cfg.batch_size * self.cfg.num_gpus, 10000],
@@ -60,10 +61,9 @@ class my_gan:
         self.g_lr_ = self.cfg.g_lr
         self.d_lr_ = self.cfg.d_lr
 
-        # self.fc1ls = m4_BE_GAN_model.fc1ls
-        # self.fc1le = m4_BE_GAN_model.fc1le
-        # self.pose_model = m4_BE_GAN_model.pose_model
-
+        self.fc1ls = m4_BE_GAN_model.fc1ls
+        self.fc1le = m4_BE_GAN_model.fc1le
+        self.pose_model = m4_BE_GAN_model.pose_model
         # -----------------------------m4_BE_GAN_network-----------------------------
 
     def train(self):
@@ -80,6 +80,12 @@ class my_gan:
             '{}/{}'.format(self.cfg.log_dir, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))),
             self.sess.graph)
         merged = tf.summary.merge_all()
+
+
+        # load exp, pose, shape
+        self.load_expr_shape_pose_param()
+
+        # load all train param
         could_load, counter = self.load(self.cfg.checkpoint_dir, self.cfg.dataset_name)
         if could_load:
             print(" [*] Load SUCCESS")
@@ -207,6 +213,38 @@ class my_gan:
         except:
             tf.initialize_all_variables().run()
 
+        # Add ops to save and restore all the variables.
+        saver_pose = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Spatial_Transformer'))
+        saver_ini_shape_net = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='shapeCNN'))
+        saver_ini_expr_net = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='exprCNN'))
+
+        # Load face pose net model from Chang et al.'ICCVW17
+        try:
+            load_path = self.cfg.fpn_new_model_ckpt_file_path
+            saver_pose.restore(self.sess, load_path)
+            print('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' failed....')
+
+        # load 3dmm shape and texture model from Tran et al.' CVPR2017
+        try:
+            load_path = self.cfg.Shape_Model_file_path
+            saver_ini_shape_net.restore(self.sess, load_path)
+            print('Load ' + self.cfg.Shape_Model_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.Shape_Model_file_path + ' failed....')
+
+        # load our expression net model
+        try:
+            load_path = self.cfg.Expression_Model_file_path
+            saver_ini_expr_net.restore(self.sess, load_path)
+            print('Load ' + self.cfg.Expression_Model_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.Expression_Model_file_path + ' failed....')
+
         could_load, counter = self.load(self.cfg.checkpoint_dir, self.cfg.dataset_name)
         if could_load:
             print(" [*] Load SUCCESS")
@@ -240,18 +278,9 @@ class my_gan:
         if not os.path.exists(self.cfg.mesh_folder):
             os.makedirs(self.cfg.mesh_folder)
 
-        try:
-            tf.global_variables_initializer().run()
-        except:
-            tf.initialize_all_variables().run()
-
         # x = tf.placeholder(tf.float32, [self.cfg.batch_size * self.cfg.num_gpus, 256, 256, 3])
 
-        expr_shape_pose = ESP.m4_3DMM(self.sess, self.cfg)
-        expr_shape_pose.extract_PSE_feats(self.images)
-        self.fc1ls = expr_shape_pose.fc1ls
-        self.fc1le = expr_shape_pose.fc1le
-        self.pose_model = expr_shape_pose.pose
+
 
         print('> Start to estimate Expression, Shape, and Pose!')
 
@@ -327,3 +356,36 @@ class my_gan:
         else:
             print(" [*] Failed to find a checkpoint")
             return False, 0
+
+    def load_expr_shape_pose_param(self):
+        # Add ops to save and restore all the variables.
+        saver_pose = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Spatial_Transformer'))
+        saver_ini_shape_net = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='shapeCNN'))
+        saver_ini_expr_net = tf.train.Saver(
+            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='exprCNN'))
+
+        # Load face pose net model from Chang et al.'ICCVW17
+        try:
+            load_path = self.cfg.fpn_new_model_ckpt_file_path
+            saver_pose.restore(self.sess, load_path)
+            print('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' failed....')
+
+        # load 3dmm shape and texture model from Tran et al.' CVPR2017
+        try:
+            load_path = self.cfg.Shape_Model_file_path
+            saver_ini_shape_net.restore(self.sess, load_path)
+            print('Load ' + self.cfg.Shape_Model_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.Shape_Model_file_path + ' failed....')
+
+        # load our expression net model
+        try:
+            load_path = self.cfg.Expression_Model_file_path
+            saver_ini_expr_net.restore(self.sess, load_path)
+            print('Load ' + self.cfg.Expression_Model_file_path + ' successful....')
+        except:
+            raise Exception('Load ' + self.cfg.Expression_Model_file_path + ' failed....')

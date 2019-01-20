@@ -170,9 +170,12 @@ class m4_BE_GAN_network:
             grads_d = []
             grads_c = []
 
-            # with tf.device("/gpu:{}".format(1)):
-            #     expr_shape_pose = ESP.m4_3DMM(self.sess, self.cfg)
-            #     self.fc1ls, self.fc1le, self.pose_model = expr_shape_pose.extract_PSE_feats(images)
+            with tf.device("/gpu:{}".format(1)):
+                expr_shape_pose = ESP.m4_3DMM(self.cfg)
+                expr_shape_pose.extract_PSE_feats(images)
+                self.fc1ls = expr_shape_pose.fc1ls
+                self.fc1le = expr_shape_pose.fc1le
+                self.pose_model = expr_shape_pose.pose
 
             for i in range(self.cfg.num_gpus):
                 images_on_one_gpu = images[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]

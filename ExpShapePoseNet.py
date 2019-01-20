@@ -21,9 +21,9 @@ from ThreeDMM_expr import ResNet_101 as resnet101_expr
 
 
 class m4_3DMM:
-    def __init__(self, sess, cfg):
+    def __init__(self, cfg):
         self.cfg = cfg
-        self.sess = sess
+
         # Get training image/labels mean/std for pose CNN
         try:
             file = np.load(self.cfg.train_imgs_mean_file_path, )
@@ -144,36 +144,7 @@ class m4_3DMM:
                 fc1be = tf.Variable(tf.reshape(ini_biases_expr, [29]), trainable=True, name='biases')
                 self.fc1le = tf.nn.bias_add(tf.matmul(pool5, fc1we), fc1be)
 
-        # Add ops to save and restore all the variables.
-        saver_pose = tf.train.Saver(
-            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='Spatial_Transformer'))
-        saver_ini_shape_net = tf.train.Saver(
-            var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='shapeCNN'))
-        saver_ini_expr_net = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='exprCNN'))
 
-        # Load face pose net model from Chang et al.'ICCVW17
-        try:
-            load_path = self.cfg.fpn_new_model_ckpt_file_path
-            saver_pose.restore(self.sess, load_path)
-            print('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' successful....')
-        except:
-            raise Exception('Load ' + self.cfg.fpn_new_model_ckpt_file_path + ' failed....')
-
-        # load 3dmm shape and texture model from Tran et al.' CVPR2017
-        try:
-            load_path = self.cfg.Shape_Model_file_path
-            saver_ini_shape_net.restore(self.sess, load_path)
-            print('Load ' + self.cfg.Shape_Model_file_path + ' successful....')
-        except:
-            raise Exception('Load ' + self.cfg.Shape_Model_file_path + ' failed....')
-
-        # load our expression net model
-        try:
-            load_path = self.cfg.Expression_Model_file_path
-            saver_ini_expr_net.restore(self.sess, load_path)
-            print('Load ' + self.cfg.Expression_Model_file_path + ' successful....')
-        except:
-            raise Exception('Load ' + self.cfg.Expression_Model_file_path + ' failed....')
 
         # return fc1ls, fc1le, pose_model.preds_unNormalized
 
