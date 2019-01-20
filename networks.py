@@ -3,7 +3,9 @@ import numpy as np
 import os
 from ops import *
 from utils import *
-
+import time
+import ExpShapePoseNet as ESP
+# import utils_3DMM
 
 class m4_gan_network:
     def __init__(self, cfg):
@@ -135,7 +137,8 @@ class m4_gan_network:
 #---------------------------------------------------------------------------
 slim = tf.contrib.slim
 class m4_BE_GAN_network:
-    def __init__(self, cfg):
+    def __init__(self, sess, cfg):
+        self.sess = sess
         self.cfg = cfg
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
         self.conv_hidden_num = cfg.conv_hidden_num
@@ -167,10 +170,18 @@ class m4_BE_GAN_network:
             grads_d = []
             grads_c = []
 
+            # with tf.device("/gpu:{}".format(1)):
+            #     expr_shape_pose = ESP.m4_3DMM(self.sess, self.cfg)
+            #     self.fc1ls, self.fc1le, self.pose_model = expr_shape_pose.extract_PSE_feats(images)
+
             for i in range(self.cfg.num_gpus):
                 images_on_one_gpu = images[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
                 labels_on_one_gpu = labels[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
                 z_on_one_gpu = z[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
+                # fc1ls_on_one_gpu = fc1ls[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
+                # fc1le_on_one_gpu = fc1le[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
+                # pose_model_on_one_gpu = pose_model[self.cfg.batch_size * i:self.cfg.batch_size * (i + 1)]
+
                 with tf.device("/gpu:{}".format(i)):
                     with tf.variable_scope("GPU_0") as scope:
                         if i != 0:
@@ -185,7 +196,6 @@ class m4_BE_GAN_network:
                         if i == 0:
                             self.sampler,self.G_var = self.GeneratorCNN(z_on_one_gpu, self.conv_hidden_num, self.channel,
                                                              self.repeat_num, self.data_format, reuse=True)
-
 
                         d_out, self.D_z, self.D_var = self.DiscriminatorCNN(
                             tf.concat([G, images_on_one_gpu], 0), self.channel, self.z_dim, self.repeat_num,
