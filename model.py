@@ -206,11 +206,13 @@ class my_gan:
             tf.global_variables_initializer().run()
         except:
             tf.initialize_all_variables().run()
+
         could_load, counter = self.load(self.cfg.checkpoint_dir, self.cfg.dataset_name)
         if could_load:
             print(" [*] Load SUCCESS")
         else:
             print(" [!] Load failed...")
+
         names = np.loadtxt(os.path.join(self.cfg.datalabel_dir, self.cfg.datalabel_name), dtype=np.str)
         dataset_size = names.shape[0]
         names, labels = m4_get_file_label_name(os.path.join(self.cfg.datalabel_dir, self.cfg.datalabel_name),
@@ -253,25 +255,27 @@ class my_gan:
 
         print('> Start to estimate Expression, Shape, and Pose!')
 
-        # image = cv2.imread('/home/yang/My_Job/study/Expression-Net/subject1_a.jpg', 1)  # BGR
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # image_size_h, image_size_w, nc = image.shape
-        # image = image / 127.5 - 1.0
-        #
-        # # image1 = cv2.imread('/home/yang/My_Job/study/Gan_Network/BE_GAN_MutiGPU_With_ID/guhan.jpg', 1)  # BGR
-        # # image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2RGB)
-        # # image_size_h, image_size_w, nc = image1.shape
-        # # image1 = image1 / 127.5 - 1.0
-        #
-        # image_list = []
-        # image_list.append(image)
-        # # image_list.append(image1)
-        #
-        # image_np = np.asarray(image_list)
-        # image_np = np.reshape(image_np, [self.cfg.batch_size, image_size_h, image_size_w, 3])
+        image = cv2.imread('/home/yang/My_Job/study/Gan_Network/BE_GAN_MutiGPU_With_ID/subject1_a.jpg', 1)  # BGR
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_CUBIC)
+        image_size_h, image_size_w, nc = image.shape
+        image = image / 127.5 - 1.0
 
-        (Shape_Texture, Expr, Pose) = self.sess.run([self.fc1ls, self.fc1le, self.pose_model], feed_dict={self.images: batch_images_G})
+        image1 = cv2.imread('/home/yang/My_Job/study/Gan_Network/BE_GAN_MutiGPU_With_ID/subject15_a.jpg', 1)  # BGR
+        image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2RGB)
+        image1 = cv2.resize(image1,(256,256),interpolation=cv2.INTER_CUBIC)
+        image_size_h, image_size_w, nc = image1.shape
+        image1 = image1 / 127.5 - 1.0
 
+        image_list = []
+        image_list.append(image)
+        image_list.append(image1)
+
+        image_np = np.asarray(image_list)
+        image_np = np.reshape(image_np, [self.cfg.batch_size * 2, image_size_h, image_size_w, 3])
+
+        (Shape_Texture, Expr, Pose) = self.sess.run([self.fc1ls, self.fc1le, self.pose_model], feed_dict={self.images: image_np})
+        print(Shape_Texture)
         # -------------------------------make .ply file---------------------------------
         ## Modifed Basel Face Model
         BFM_path = self.cfg.BaselFaceModel_mod_file_path
